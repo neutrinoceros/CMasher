@@ -70,8 +70,9 @@ jobs:
 
     - name: Test package (with coverage)
       if: startsWith( matrix.os , 'ubuntu' )
+      # cannot use --frozen flag here because it would nullify UV_RESOLUTION
       run: |
-        uv run --frozen --with-requirements requirements/dev.txt \
+        uv run --with-requirements requirements/dev.txt \
           ${{ matrix.test-args }} \
           coverage run --parallel-mode -m pytest --color=yes --mpl
 
