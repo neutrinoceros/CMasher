@@ -29,7 +29,7 @@ jobs:
         - '3.11'
         - '3.12'
         - '3.13'
-        test-args: [viscm>=0.10]
+        test-args: [--with 'viscm>=0.10']
 
         include:
         - os: ubuntu-20.04
@@ -54,29 +54,26 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         enable-cache: true
-        cache-dependency-glob: pyproject.toml
 
     - name: Set UV_RESOLUTION
       if: ${{ matrix.oldestdeps }}
       run: |
         echo "UV_RESOLUTION=lowest-direct" >> $GITHUB_ENV
 
-    - name: Build
-      run: |
-        uv venv
-        uv pip install .
-        uv pip install -r requirements/dev.txt ${{ matrix.test-args }}
-
-    - run: uv pip list
-
     - name: Test package (no coverage)
       if: ${{ !startsWith( matrix.os , 'ubuntu' ) }}
-      run: uv run --no-editable pytest --color=yes --mpl
+      shell: bash # windows-compat
+      run: |
+        uv run --frozen --no-editable --with-requirements requirements/dev.txt \
+          ${{ matrix.test-args }} \
+          pytest --color=yes --mpl
 
     - name: Test package (with coverage)
       if: startsWith( matrix.os , 'ubuntu' )
       run: |
-        uv run --no-editable coverage run --parallel-mode -m pytest --color=yes --mpl
+        uv run --frozen --with-requirements requirements/dev.txt \
+          ${{ matrix.test-args }} \
+          coverage run --parallel-mode -m pytest --color=yes --mpl
 
     - name: Upload coverage data
       # only using reports from ubuntu because
@@ -141,11 +138,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         enable-cache: true
-        cache-dependency-glob: pyproject.toml
 
     - name: Run mypy
       run: |
-        uvx --with-requirements=requirements/typecheck.txt --with . \
+        uv run --with-requirements=requirements/typecheck.txt --with . \
           mypy src/cmasher
 
   docs:
@@ -162,7 +158,6 @@ jobs:
       with:
         python-version: '3.13'
         enable-cache: true
-        cache-dependency-glob: pyproject.toml
 
     - name: Build
       run: |
@@ -183,7 +178,6 @@ jobs:
     - uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
       with:
         enable-cache: true
-        cache-dependency-glob: pyproject.toml
     - run: uv build
     - run: uvx twine check dist/*
     - run: uv run scripts/check_dist.py
