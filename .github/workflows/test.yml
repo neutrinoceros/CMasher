@@ -54,6 +54,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - run: uv cache clear # tmp
     - name: Set UV_RESOLUTION
       if: ${{ matrix.oldestdeps }}
       run: |
